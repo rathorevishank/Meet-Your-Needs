@@ -1,0 +1,28 @@
+.btn-primary {
+    background-color: red;
+    border-color: red;
+  }
+  body {
+    font-family: Arial, sans-serif;
+  }
+
+  .feedback-container {
+    padding: 2rem;
+    border: 1px solid #ccc;
+    border-radius: 0.5rem;
+    background-color: #fff;
+  }
+  
+  .rating-container {
+    margin-bottom: 1rem;
+  }
+  
+  .comments-container {
+    margin-top: 1rem;
+  }
+
+  .my-form {
+    max-width: 500px;
+    margin: 0 auto;
+  }
+  

@@ -1,0 +1,127 @@
+import React, { useState } from "react";
+import { useEffect } from "react";
+import { styled } from '@mui/material/styles';
+import Table from '@mui/material/Table';
+import TableBody from '@mui/material/TableBody';
+import TableCell, { tableCellClasses } from '@mui/material/TableCell';
+import TableContainer from '@mui/material/TableContainer';
+import TableHead from '@mui/material/TableHead';
+import TableRow from '@mui/material/TableRow';
+import Paper from '@mui/material/Paper';
+import { Button } from "@mui/material";
+import Alert from '@mui/material/Alert';
+import { NavLink } from "react-bootstrap";
+import { useNavigate } from "react-router";
+
+const VendorHome = () => {
+
+    const StyledTableCell = styled(TableCell)(({ theme }) => ({
+        [`&.${tableCellClasses.head}`]: {
+            backgroundColor: theme.palette.common.black,
+            color: theme.palette.common.white,
+        },
+        [`&.${tableCellClasses.body}`]: {
+            fontSize: 14,
+        },
+    }));
+
+    const StyledTableRow = styled(TableRow)(({ theme }) => ({
+        '&:nth-of-type(odd)': {
+            backgroundColor: theme.palette.action.hover,
+        },
+        // hide last border
+        '&:last-child td, &:last-child th': {
+            border: 0,
+        },
+    }));
+    const user = JSON.parse(localStorage.getItem('user'));
+    const [vendor, setVendor] = useState({})
+    const [req, setReq] = useState([])
+    const navigate = useNavigate();
+
+
+    useEffect(() => {
+        console.log("in effect")
+        fetch("http://localhost:8080/pendingRequest")
+            .then(response => response.json())
+            .then(data => {
+                setReq(data);
+            })
+
+        fetch("http://localhost:8080/getVendorByUser?id=" + user.userId)
+            .then(response => response.json())
+            .then(vdr => { setVendor(vdr) })
+    }, []);
+
+    const goProfile = (e) => {
+        e.preventDefault();
+        fetch("http://localhost:8080/getVendorPortfolioByid?id=1")
+            .then(response => response.json())
+            .then(data => { localStorage.setItem('portfolio', data.stringify) })
+        fetch("http://localhost:8080/getfeedback")
+            .then(response => response.json())
+            .then(data => { localStorage.setItem('feedback', data.stringify) })
+        navigate('/port')
+    }
+
+    const handleSubmit = (e) => {
+
+        e.preventDefault();
+        const reqOption = {
+            method: "post",
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({ reqid: Number(e.target.id), vid: vendor.vendorid, date: new Date(), })
+        }
+        fetch("http://localhost:8080/addResp", reqOption)
+            .then(resp => {
+                if (resp.ok) {
+                    console.log("requset sent");
+                    document.getElementById("sucess").style.display = "block";
+                    document.getElementById(e.target.id).disabled = true;
+                    document.getElementById(e.target.id).color = "error";
+                }
+                else
+                    throw new Error("server error");
+            })
+            .catch((error) => { alert("server error,try after some time") });
+    };
+
+    return (
+        <div>
+            <Button variant="text" onClick={goProfile}>Profile</Button>
+            <div style={{ float: "inline-start", marginTop: '20px' }}>
+                <Alert severity="success" style={{ display: 'none' }} id="sucess">Applied</Alert>
+                <TableContainer component={Paper}>
+                    <Table sx={{ minWidth: 700 }} aria-label="customized table">
+                        <TableHead>
+                            <TableRow>
+                                <StyledTableCell>Customer</StyledTableCell>
+                                <StyledTableCell align="right">Description</StyledTableCell>
+                                <StyledTableCell align="right">budget</StyledTableCell>
+                                <StyledTableCell align="right">Posted on</StyledTableCell>
+                                <StyledTableCell align="right">Category</StyledTableCell>
+                                <StyledTableCell align="right"></StyledTableCell>
+                            </TableRow>
+                        </TableHead>
+                        <TableBody>
+                            {req.map((request) => (
+                                <StyledTableRow key={request.rid}>
+                                    <StyledTableCell component="th" scope="request">
+                                        {request.client.userId.firstName}&nbsp;{request.client.userId.lastName}
+                                    </StyledTableCell>
+                                    <StyledTableCell align="right" sx={{ width: 400 }}>{request.pid}</StyledTableCell>
+                                    <StyledTableCell align="right">{request.budget}</StyledTableCell>
+                                    <StyledTableCell align="right">{request.rdate}</StyledTableCell>
+                                    <StyledTableCell align="right">{request.category.category_name}</StyledTableCell>
+                                    <StyledTableCell align="right"><Button id={request.rid} variant="outlined" onClick={handleSubmit}>Apply</Button></StyledTableCell>
+                                </StyledTableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </TableContainer>
+                <br />
+            </div>
+        </div>
+    )
+}
+export default VendorHome;
